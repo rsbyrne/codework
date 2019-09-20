@@ -1,28 +1,32 @@
 import sys
-sys.path.append('/home/jovyan/workspace')
+workPath = '/home/jovyan/workspace'
+if not workPath in sys.path:
+    sys.path.append(workPath)
 
-import os
-outputDir = '/home/jovyan/workspace/data'
+import planetengine
+outDir = planetengine.paths.defaultPath
 
-projName = 'isobench'
+projName = 'arrbench'
 projBranch = ''
-outputPath = os.path.join(outputDir, projName, projBranch)
+outputPath = os.path.join(outDir, projName, projBranch)
 
 import planetengine
 import modelscripts
 
 chunks = int(sys.argv[1])
 chunkno = int(sys.argv[2])
+iterno = int(sys.argv[3])
 
 suitelist = planetengine.utilities.suite_list({
-    'f': [x / 10. for x in range(1, 11)],
-    'Ra': [10. ** (x / 2.) for x in range(6, 15)],
+    'f': [0.2, 0.4, 0.6, 0.8, 1.],
+    'eta': [1., 10., 100., 1000., 10000.],
+    'Ra': [1e3, 1e4, 1e5, 1e6, 1e7],
     }, shuffle = True, chunks = chunks)
 
-localJobs = suitelist[chunkno]
+localJob = suitelist[chunkno][iterno]
 
 planetengine.log(
-    "Starting chunk no# " + str(chunkno),
+    "Starting chunk no# " + str(chunkno) + ", iter no# " + str(iterno),
     'logs'
     )
 
@@ -35,28 +39,17 @@ for index, job in enumerate(localJobs):
         )
 
     conditions = {
-        'stopCondition': lambda: model.modeltime > 0.3,
-        'collectConditions': lambda: model.step % 10 == 0,
+        'stopCondition': lambda: model.modeltime() > 0.3,
         'checkpointCondition': lambda: any([
             model.status == 'pre-traverse',
-            model.step % 1000 == 0,
+            model.step() % 1000 == 0,
             model.status == 'post-traverse',
             ]),
         }
 
-    planetengine.log(
-        "Starting chunk no# " + str(chunkno) + " job no# " + str(index) + " params: " + str(sorted(job.items())),
-        'logs'
-        )
-
     model.traverse(**conditions)
 
-    planetengine.log(
-        "Finishing chunk no# " + str(chunkno) + " job no# " + str(index) + " params: " + str(sorted(job.items())),
-        'logs'
-        )
-
 planetengine.log(
-    "Finishing chunk no# " + str(chunkno),
+    "Finishing chunk no# " + str(chunkno) + ", iter no# " + str(iterno),
     'logs'
     )
