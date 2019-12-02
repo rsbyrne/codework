@@ -5,8 +5,8 @@ import planetengine
 frameID = 'MS98test'
 outputPath = 'out/test'
 
-if planetengine.mpi.rank == 0:
-    os.makedirs(outputPath)
+#if planetengine.mpi.rank == 0:
+#    os.makedirs(outputPath)
 
 system = planetengine.systems.MS98.build(
     res = 32,
@@ -20,17 +20,17 @@ observer = planetengine.observers.observeMS98.build(
 system.anchor(frameID, outputPath)
 system.coanchor(observer)
 
-system.store()
-observer.store()
-for i in range(1000):
-    system.iterate()
-    if not i % 3:
-        observer.store()
-    if not i % 13:
-        system.store()
-    if not i % 100:
-        system.save()
-        observer.save()
+#system.store()
+#observer.store()
+#for i in range(1000):
+#    system.iterate()
+#    if not i % 3:
+#        observer.store()
+#    if not i % 13:
+#        system.store()
+#    if not i % 100:
+#        system.save()
+#        observer.save()
 
 with observer.file() as file:
     imgArrs = file[observer.hashID]['raster']
@@ -38,4 +38,5 @@ with observer.file() as file:
         split_imgArr = planetengine.visualisation.raster.split_imgArr(imgArr)
         img = planetengine.visualisation.raster.rasterise(*split_imgArr)
         saveName = os.path.join(outputPath, str(index).zfill(3) + '.png')
-        img.save(saveName)
+        if planetengine.mpi.rank == 0:
+            img.save(saveName)
