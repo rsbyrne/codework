@@ -22,7 +22,7 @@ system.coanchor(observer)
 
 system.store()
 observer.store()
-for i in range(1000):
+for i in range(1001):
     system.iterate()
     if not i % 3:
         observer.store()
